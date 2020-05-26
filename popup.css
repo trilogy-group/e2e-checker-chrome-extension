@@ -16,6 +16,9 @@ button:hover {
 .button-primary{
     background: rgb(0, 95, 239);
 }
+.button-secondary{
+  background: rgb(184, 7, 228);
+}
 /* Style tab links */
 .tablink {
     background-color: #555;
@@ -27,6 +30,9 @@ button:hover {
     width: 25%;
   }
   
+  .show-me-desc{
+    background-color: red; 
+  }
   .tablink:hover {
     background-color: #777;
   }
