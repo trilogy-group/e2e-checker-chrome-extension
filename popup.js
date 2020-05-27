@@ -89,11 +89,11 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         }
         xhr.open("GET", validationURL, true);
-        xhr.timeout = 45000; // Set timeout to 45 seconds (4000 milliseconds)
+        xhr.timeout = 60000; // Set timeout to 60 seconds (60000 milliseconds)
         xhr.ontimeout = function () { 
-                    console.log('Request Timed out 45 secs');
+                    console.log('Request Timed out 60 secs');
                     document.getElementById("loader-div").classList.remove("loading")
-                    $("#check-info").html(`Request Timed out 45 secs. Check VPN or server is down.`)
+                    $("#check-info").html(`Request Timed out 60 secs. Check VPN or server is down.`)
                 }
         xhr.send();
         document.getElementById("loader-div").classList.add("loading")
