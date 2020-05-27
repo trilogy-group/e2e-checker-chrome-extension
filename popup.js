@@ -5,17 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var switchButtons = document.getElementsByClassName('switches');
     
     storageFetchButton.addEventListener('click', function() {
-      // chrome.storage.local.get(["key"], function(result) {
-      //   if(result.key){
-      //     console.log('Value currently is ' + result.key);
-      //     $("#past-fetch").show();
-      //     let resp = new Date(result.key["resp"])
-      //     RenderData(resp)
-      //   }
-      //   else{
-      //     $("#check-info").html(`NO storage avaiable`)
-      //   }
-      // });
       chrome.tabs.getSelected(null, function(tab) {
           let url = tab.url;
           let ticketKey = url.substring(url.lastIndexOf('/') + 1)
@@ -35,23 +24,14 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.tabs.getSelected(null, function(tab) {
         let url = tab.url;
         let ticketKey = url.substring(url.lastIndexOf('/') + 1)
-        // check storage and populate
-
-        // chrome.storage.local.get(["key"], function(result) {
-        //   if(result.ticketKey){
-        //     console.log('Value currently is ' + result.ticketKey);
-        //     $("#past-fetch").show();
-        //     let date = new Date(result.ticketKey["date"])
-        //     $("#check-info").html(`Storaged last validation for <b>${ticketKey}</b> on <b>${date}</b>`)
-        //   }
-        // });
 
       let storage=localStorage.getItem(ticketKey);
       if(storage){
           storage = JSON.parse(storage)
           $("#past-fetch").show();
           let date = new Date(storage["date"])
-          $("#check-info").html(`Storaged last validation for <b>${ticketKey}</b> on <b>${date}</b>`)
+          date= date.toLocaleString()
+          $("#check-info").html(`Stored last validation for <b>${ticketKey}</b> on <b>${date}</b>`)
       }
     });
 
@@ -89,24 +69,22 @@ document.addEventListener('DOMContentLoaded', function() {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
-                // JSON.parse does not evaluate the attacker's scripts.
+
                 var resp = JSON.parse(xhr.responseText);
                 console.log(resp)
                 RenderData(resp)
                 let now = new Date()
-                let date= now.toGMTString().split(",")[1]
-                let storage = {resp:resp,date:date};
+                let date= now.toLocaleString()
+                let storage = {resp:resp,date:now};
                 localStorage.setItem(ticketKey, JSON.stringify(storage));
-                // chrome.storage.local.set({"key": {"ticketKey":ticketKey,resp:resp,date:date}}, function() {
-                //   console.log("saved ")
-                //   console.log({ticketKey: {resp:resp,date:date}});
-                // });
+                
                 document.getElementById("loader-div").classList.remove("loading")
                 $("#check-info").html(`fetched validation for <b>${ticketKey}</b> on <b>${date}</b>`)
                 
             }
             if( xhr.status > 299 && xhr.readyState == 4) {
               console.log('Server Error: ' + xmlHTTP.statusText);
+              document.getElementById("loader-div").classList.remove("loading")
               $("#check-info").html(`API Failed. Check VPN or server is down.`)
           }
         }
