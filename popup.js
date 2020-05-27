@@ -171,18 +171,24 @@ document.addEventListener('DOMContentLoaded', function() {
           category = 1;
           let title = result["check"]
           let assertions = result["assertions"]
+          let pass_assertions = []
+          let fail_assertions = []
           for (let assertion of assertions){
             if(assertion["result"]=="FAIL"){
-                category = 0
-                break;
+                fail_assertions.push(assertion)
+            }
+            else{
+                pass_assertions.push(assertion)
             }
           }
-          let finalResult = {title : title, assertions : assertions}
-          if(category == 0){
-              fails.push(finalResult)
+          
+          if(fail_assertions.length > 0){
+            let finalResult = {title : title, assertions : fail_assertions}
+            fails.push(finalResult)
           }
-          else if(category == 1){
-              passes.push(finalResult)
+          if(pass_assertions.length > 0){
+            let finalResult = {title : title, assertions : pass_assertions}
+            passes.push(finalResult)
           }
       }
       console.log(fails)
