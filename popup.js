@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if(assertion.description.indexOf("/") > -1 && assertion.description.indexOf("--") >-1 && type === "fail"){
             showMe=`<button class="show-me-desc">show me</button>`;
           }
-            html= html + `<div class="tab-content">${assertion.description} ${showMe}</div>`;
+            html= html + `<div class="tab-content">${escapeHtml(assertion.description)} ${showMe}</div>`;
         }
         html= html + "</div>";
     }
@@ -192,3 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
+  function escapeHtml(str) {
+    str = str.replace(/</g, "##-open-##").replace(/>/g, "##-close-##");
+    return str.replace(/##-open-##/g, " <b>").replace(/##-close-##/g, "</b> ");
+}
