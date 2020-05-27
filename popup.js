@@ -83,12 +83,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 
             }
             if( xhr.status > 299 && xhr.readyState == 4) {
-              console.log('Server Error: ' + xmlHTTP.statusText);
+              console.log('Server Error: ' + xhr.statusText);
               document.getElementById("loader-div").classList.remove("loading")
-              $("#check-info").html(`API Failed. Check VPN or server is down.`)
+              $("#check-info").html(`API Failed with status ${xhr.status}. Check VPN or server is down.`)
           }
         }
         xhr.open("GET", validationURL, true);
+        xhr.timeout = 45000; // Set timeout to 45 seconds (4000 milliseconds)
+        xhr.ontimeout = function () { 
+                    console.log('Request Timed out 45 secs');
+                    document.getElementById("loader-div").classList.remove("loading")
+                    $("#check-info").html(`Request Timed out 45 secs. Check VPN or server is down.`)
+                }
         xhr.send();
         document.getElementById("loader-div").classList.add("loading")
         
