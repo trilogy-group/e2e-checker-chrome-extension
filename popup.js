@@ -3,8 +3,8 @@ CONFIG={
   ticketValidatorEndPoint: "http://private.central-eks.aureacentral.com/pca-qe/api/review/",
   envDSValidatorEndPoint: "http://private.central-eks.aureacentral.com/pca-qe/api/ticketservice/envDs/yaml",
   EnvStatus : {
-    SELECTORS_NOT_SET : "EnvDS not found. You can set envDS manually",
-    ENV_FOUND : "An Environemnt was found",
+    ENV_NOT_FOUND_LOAD : "No environemnt Found on Page. Click to load Intelliselectors",
+    ENV_FOUND_LOAD : "An Environemnt was found on Page. Click to load Intelliselectors",
     LOADING_SELECTORS : "Loading Selectors",
     SELECTORS_LOADED: "IntelliSelectors Activated from"
   },
@@ -13,6 +13,15 @@ CONFIG={
   timeout: 60000
 }
 var CURRENT_INTELLI_SELECTORS_LIST = null
+
+
+const sendMagicSelectorsToContent =(selectors) =>{
+  chrome.tabs.query({active: true,currentWindow: true},(tabs) => {
+    let message={}
+    message[CONFIG.msgIdentifier] = {magicSelectors:selectors};
+    chrome.tabs.sendMessage(tabs[0].id, message);
+  });
+}
 
 const loadIntelliSelectors = (url, topText, bottomText) => {
   let obj = getFromLocalStorage(url)
@@ -23,27 +32,36 @@ const loadIntelliSelectors = (url, topText, bottomText) => {
   localStorage.setItem(CONFIG.INTELLI_SELECTORS_KEY, JSON.stringify(storage_selectors))
   CURRENT_INTELLI_SELECTORS_LIST = magicselectors
   
+  sendMagicSelectorsToContent(magicselectors)
+
   // Show Status
   let path = url.replace(CONFIG.enVDSURLMatcher, "")
   $("#env-status-show").html(`(${no__of_selectors}) ${topText} <br> ${path} <br> ${date} <br>${bottomText}`)
 }
 
 const renderEnvDS = envds => {
-  if(!envds){
-    return;
-  }
+
   console.log(envds)
-  let path = envds.replace(CONFIG.enVDSURLMatcher, "")
-  $("#env-url-input").val(envds)
-  let storedIntelliSelectors = getFromLocalStorage(CONFIG.INTELLI_SELECTORS_KEY)
-  
-  let do_we_have_envds = getFromLocalStorage(envds)
-  if(do_we_have_envds){
+  let path = null
+
+  if(envds && getFromLocalStorage(envds) ){
     loadIntelliSelectors(envds, "Intelliselectors for environment loaded from", "Click to load recent one")   
-  }else{
-    $("#env-status-show").html(`${CONFIG.EnvStatus.ENV_FOUND} <br> ${path}`)
+    $("#env-url-input").val(envds)
+    
+  }else if(envds && !getFromLocalStorage(envds)){
+    localStorage.removeItem(CONFIG.INTELLI_SELECTORS_KEY);
+    path = envds.replace(CONFIG.enVDSURLMatcher, "")
+    $("#env-status-show").html(`${CONFIG.EnvStatus.ENV_FOUND_LOAD} <br> ${path}`)
   }
-  
+  else if (!envds){
+    let storedIntelliSelectors = getFromLocalStorage(CONFIG.INTELLI_SELECTORS_KEY)
+    if(storedIntelliSelectors){
+      let url = storedIntelliSelectors.url
+      loadIntelliSelectors(url,`IntelliSelectors loaded. But No EnvDS found on Page`,"")
+    }else{
+    $("#env-status-show").html(`${CONFIG.EnvStatus.ENV_NOT_FOUND_LOAD}`)
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -369,7 +387,7 @@ function parseSelectors(obj){
     let finalSelectors = group["selectors"]
     for (var key in finalSelectors) {
       if (finalSelectors.hasOwnProperty(key)) {
-        let serachKey = key.toLowerCase().replace(/ /g, "");
+        let serachKey = key.toLowerCase().replace(/ /g, "").replace(/-/g, "");
         let serachValue={xpath:finalSelectors[key], group: groupName, name: key}
         theMagicSelectorObj[serachKey]=serachValue
       }
