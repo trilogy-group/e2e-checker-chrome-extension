@@ -2,33 +2,54 @@
 <html>
   <head>
     <title>E2E Validator</title>
-    <script src="popup.js"></script>
     <script src="jquery.min.js"></script>
+    <script src="yaml.min.js"></script>
+    <script src="popup.js"></script>
+    
     <link rel="stylesheet" type="text/css" href="popup.css">
   </head>
   <body>
     
-    <h2>E2E Validator</h2>
-    <button class="button-primary" id="checkPage">Check Now !</button>
-    <button style="display: none" class="button-secondary" id="past-fetch">Fetch From Storage</button>
-    <p id="check-info"></p>
-    <br>
-    <section>
-        <button id="defaultOpen" class="tablink switches" data-switch="Fail" data-color="red">Fail</button>
-        <button id="passButton" class="tablink switches" data-switch="Pass" data-color="green" >Pass</button>
-        
-        <div id="loader-div"></div>
-        <div id="Fail" class="tabcontent">
-            <div id="failResponse" class="tabs">
+    <h2><span id="e2e-title">E2E Validator</span></h2>
+    <div id="e2e-display">
+      <button class="button-primary" id="checkPage">Check Now !</button>
+      <button style="display: none" class="button-secondary" id="past-fetch">Fetch From Storage</button>
+      <p id="check-info"></p>
+      <br>
+      <section id="main-section">
+          <button id="defaultOpen" class="tablink switches" data-switch="Fail" data-color="red">Fail</button>
+          <button id="passButton" class="tablink switches" data-switch="Pass" data-color="green" >Pass</button>
+          <button id="otherButton" class="tablink switches" data-switch="Other" data-color="darkorange" >Other</button>
+          
+          <div id="loader-div"></div>
+          
+          <div id="Fail" class="tabcontent">
+              <div id="failResponse" class="tabs">
+              </div>
+          </div>
+
+          <div id="Pass" class="tabcontent">
+            <div id="passResponse" class="tabs">
             </div>
-        </div>
+          </div>
+          
+          <div id="Other" class="tabcontent">
+            <div id="otherResponse" class="tabs">
+            </div>
+          </div>
 
-        <div id="Pass" class="tabcontent">
-        <div id="passResponse" class="tabs">
-
-        </div>
-        </div>
-    </section>
+      </section>
+    </div>
+    <div id= "envDiv">
+      <div style="display: none;" id="env-show-hide">
+          <input type="text" size="50" id="env-url-input" />
+          <button class="button-secondary" id="load-env-button">Load intelliSelectors</button>
+      </div>
+      <div id="envFooter">
+          <p><span id="env-status-show"></span></p>
+      </div>
+    </div>
+    
   </body>
 </html>
 
