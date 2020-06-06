@@ -1,4 +1,35 @@
+#filtered-selector-display-list{
+  list-style: none;
+  padding-left: 15px;
+  padding-right: 10px;
+  overflow: auto;
+  height: 400px;
+}
+#filtered-selector-display-list li{
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
 
+#filtered-selector-display-list li.selected{
+  border: 1px solid darkorange ;
+  font-weight: 700;
+}
+
+.ms-t-group{
+  color: blue;
+}
+#ms-sel-info{
+  position:fixed;
+  bottom : 20px;
+  right: 20px;
+  width: 200px;
+  padding-left: 3px;
+  background-color: darkorange;
+  z-index:999;
+    border: 1px solid rgba(0, 0, 0, 0.2) ;
+    border-radius: 2px;
+    box-shadow: 4px 7px 18px rgba(0, 0, 0, 0.2);
+}
 
   #sw-hd{
     position:fixed;

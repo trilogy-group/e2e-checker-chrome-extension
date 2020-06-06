@@ -6,8 +6,16 @@ var CONFIG ={
    enVDSURLMatcher: "https://confluence.devfactory.com/",
    INTELLI_SELECTORS_KEY : "IntelliSelectors"
 }
-var CUR_SEL_LIST=null;
-var CACHE_SEL_LIST=null;
+var MS ={
+   FULL_SEL_LIST: {},
+   CACHE_SEL_LIST: {},
+   FILETERED_SEL_LIST: [],
+   NEW_SELECTORS : [],
+   cur_selector_active_index: -1,
+   last_search_key: "",
+   HELPER_DIV_VISIBLE: false 
+}
+
 chrome.runtime.onMessage.addListener((message, sender, response)=> {
    // do not do anything if message is not from extension
    if(! message.hasOwnProperty(CONFIG.msgIdentifier)){
@@ -40,22 +48,22 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
    else if(message.hasOwnProperty("returnEnvDS")){
       let envDS = null;
       let toSearchInDiv = null;
-      if(document.getElementById(CONFIG.jiraDescriptionBoxId)){
-         toSearchInDiv = document.getElementById(CONFIG.jiraDescriptionBoxId)
-      }
-      else if(document.getElementById(CONFIG.jiraTinyMCEId)){
-         toSearchInDiv = document.getElementById(CONFIG.jiraTinyMCEId);
-      }
-      if(toSearchInDiv!=null){
+      toSearchInDiv = document.getElementById(CONFIG.jiraDescriptionBoxId)
+      if(toSearchInDiv){
          envDS = toSearchInDiv.querySelector(`a[href^='${CONFIG.enVDSURLMatcher}']`)
-         if(envDS){
-            response(envDS.href)
-            return
-         }
-         else{
-            console.log("envDS not found")
-            response(null)
-         }
+      }
+      if(!envDS){
+         // Try seraching in iframe
+         if(document.getElementById(CONFIG.jiraTinyMCEIframeId)){
+            toSearchInDiv = document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.getElementById(CONFIG.jiraTinyMCEId)
+            if(toSearchInDiv){
+               envDS = toSearchInDiv.querySelector(`a[href^='${CONFIG.enVDSURLMatcher}']`)
+            }
+         } 
+      }
+      if(envDS){
+         response(envDS.href)
+         return
       }
       else{
          console.log("envDS not found")
@@ -64,7 +72,8 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
    }
 
    else if(message.hasOwnProperty("magicSelectors")){
-      CACHE_SEL_LIST = CUR_SEL_LIST = message["magicSelectors"];
+      MS.CACHE_SEL_LIST = MS.FULL_SEL_LIST = message["magicSelectors"];
+      populateSelectorInfoDiv()
    }
    });
 
@@ -80,9 +89,7 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
 */
 
 const onJiraDescriptiopnKeyPress = function(e){
-   console.log(e)
-   console.log(e.target)
-   console.log(document.getSelection());
+
    let content = e.target.innerHTML;
    if(e.target.id=="tinymce"){
        let regexp = /"\.[a-zA-Z1-9 ]+"/g;
@@ -101,42 +108,145 @@ const onJiraDescriptiopnKeyPress = function(e){
        
        showHelperDiv(searchText)
        if(e.keyCode==40){// arrowDown
-           e.preventDefault();
-           e.stopPropagation();
+         if(!MS.HELPER_DIV_VISIBLE || e.type == "keyup"){
+            return
+         }  
+         e.preventDefault();
+         e.stopPropagation();
+         msArrowDown()
        }
        else if(e.keyCode==38){// arrowUp
+         if(!MS.HELPER_DIV_VISIBLE || e.type == "keyup"){
+            return
+         }
            e.preventDefault();
            e.stopPropagation();
+           msArrowUp()
        }
        else if(e.keyCode==27){
            HideHelperDiv();
        }
        else if(e.keyCode==16 || e.keyCode==13){// Enter or shift
-           e.preventDefault();
-           e.stopPropagation();
-
-           let position = getCaretCharacterOffsetWithin(e.target)
-           console.log("position")
-           console.log(position)
-           // e.target.innerHTML=e.target.innerHTML.replace(firstMatch,'<span style="background-color: yellow">' +firstMatch.replace(".","")+'</span>')
-           e.target.innerHTML=e.target.innerHTML.replace(firstMatch,firstMatch.replace(".",""))
-           setCaretPosition(e.target, position)
-           // setCursor(position)
-           //insertNodeAtCaret("["+firstMatch.replace(".","")+"]")
-           HideHelperDiv();
-           return;
+         if(!MS.HELPER_DIV_VISIBLE || e.type == "keyup"){
+            return
+         }
+         e.preventDefault();
+         e.stopPropagation();
+         liOptionSelected(e, firstMatch);
+         return;
        }
        else{
-          renderSelectorOptions()
+          if(e.type == "keyup"){
+            filterSelectorOptions()
+            renderFilteredSelectors()
+          }
        }
    }
 }
-function renderSelectorOptions(){
+
+
+function liOptionSelected(e, match){
+   let filterLen = Object.keys(MS.FILETERED_SEL_LIST).length;
+   let current_index = MS.cur_selector_active_index;
+   if(current_index > -1 && current_index <= filterLen){
+      let position = getCaretCharacterOffsetWithin(e.target)
+      let textToReplace = document.getElementById("sw-hd-ib").value
+      if(current_index == filterLen ){
+         MS.NEW_SELECTORS.push(textToReplace)
+         populateSelectorInfoDiv()
+      }else{
+         let selector = MS.FILETERED_SEL_LIST[current_index]
+         textToReplace = selector.name
+      }
+      e.target.innerHTML=e.target.innerHTML.replace(match,`"${textToReplace}"`)
+      // e.target.innerHTML=e.target.innerHTML.replace(match,match.replace(".",""))
+      let position_delta =textToReplace.length - match.length
+      position_delta = position_delta + 3 
+      setCaretPosition(e.target, position+position_delta)
+   }
+   HideHelperDiv();
+}
+
+function unSelectAllSelectedLI(){
+   let selected = document.querySelectorAll('#filtered-selector-display-list li.selected')
+   for(li of selected){
+      li.classList.remove("selected")
+   }
+}
+
+function msArrowDown(){
+   let filterLen = Object.keys(MS.FILETERED_SEL_LIST).length;
+   let current_index = MS.cur_selector_active_index;
+   let new_index = current_index + 1;
+   if(new_index > filterLen){
+      // DO nothing
+      MS.cur_selector_active_index = 0
+   }
+   else{
+      MS.cur_selector_active_index = new_index
+   }
+   unSelectAllSelectedLI()
+   document.getElementById("ms-filtered-selector-"+MS.cur_selector_active_index).classList.add("selected")
+   let scrollTop = ( (MS.cur_selector_active_index * 26) - (410/2))
+   document.getElementById("filtered-selector-display-list").scrollTop = scrollTop
+}
+function msArrowUp(){
+   let filterLen = Object.keys(MS.FILETERED_SEL_LIST).length;
+   let current_index = MS.cur_selector_active_index;
+   let new_index = current_index -1;
+   if(new_index < 0){
+      // DO nothing
+      MS.cur_selector_active_index = filterLen
+   }
+   else{
+      MS.cur_selector_active_index = new_index
+   }
+   unSelectAllSelectedLI()
+   document.getElementById("ms-filtered-selector-"+MS.cur_selector_active_index).classList.add("selected")
+   let scrollTop = ((MS.cur_selector_active_index * 26) - (410/2))
+   document.getElementById("filtered-selector-display-list").scrollTop = scrollTop
+}
+function populateSelectorInfoDiv(){
+   if(document.getElementById("ms-sel-info")){
+      document.getElementById("sel-info-top").innerHTML = Object.keys(MS.FULL_SEL_LIST).length
+      document.getElementById("sel-info-bottom").innerHTML = MS.NEW_SELECTORS.length
+   }
+}
+
+function renderFilteredSelectors(){
+   let html ="";
+   let i=0;
+   for (; i< MS.FILETERED_SEL_LIST.length ; i++ ){
+      let selObj =MS.FILETERED_SEL_LIST[i]
+      html = html + `<li id='ms-filtered-selector-${i}'> ${selObj.name} |  <span class="ms-t-group"> ${selObj.group}</span> </li> `
+   }
+   html = html + `<li id='ms-filtered-selector-${i}'> --- NEW SELECTOR --- </li> `
+   
+   document.getElementById("filtered-selector-display-list").innerHTML = html
+   document.getElementById("ms-filter-info").innerHTML = ` ${MS.FILETERED_SEL_LIST.length} / ${Object.keys(MS.FULL_SEL_LIST).length} Matched!`
+   document.getElementById("ms-filtered-selector-0").classList.add("selected")
+   MS.cur_selector_active_index = 0
+}
+
+function updateFilteredSelectors(filteredSelectors){
+   MS.FILETERED_SEL_LIST = filteredSelectors
+}
+function filterSelectorOptions(){
    let searchKey=document.getElementById("sw-hd-ib").value
    searchKey = searchKey.toLowerCase().replace(/ /g, "").replace(/-/g, "");
-   let keys=Object.keys(CACHE_SEL_LIST)
+   // Optimize the search if the seach key was already there in the last search
+   // Use the cache selector list.
+   if(searchKey.indexOf(MS.last_search_key) < 0){
+      MS.CACHE_SEL_LIST = MS.FULL_SEL_LIST
+   }
+   let keys=Object.keys(MS.CACHE_SEL_LIST)
    let newkeys = keys.filter(key => key.indexOf(searchKey)>-1)
-   console.log(newkeys)
+   let filteredSelectorOptions =[];
+   for (key of newkeys){
+      filteredSelectorOptions.push(MS.CACHE_SEL_LIST[key])
+   }
+   MS.last_search_key = searchKey
+   updateFilteredSelectors(filteredSelectorOptions)
 }
 function showHelperDiv(searchText){
    document.getElementById("sw-hd").style.display="block"
@@ -146,32 +256,46 @@ function showHelperDiv(searchText){
    }else{
        document.getElementById("sw-hd-ib").value = "";
    }
+   MS.HELPER_DIV_VISIBLE = true;
 }
 
 function HideHelperDiv(){
    document.getElementById("sw-hd").style.display="none"
    document.getElementById("sw-fade").style.display="none"
+   MS.HELPER_DIV_VISIBLE = false;
 }
 
-function descriptionClicked(e){
-   console.log(e.target)
-// document.getElementById("mce_6_ifr").addEventListener("keydown",onGoogleSearchInboxKeyPress)
-}
+function renderSelInfoDiv(){
+   var helper_div = document.createElement("div");
+  let selinfoContent = `
+   <div id="ms-sel-info">
+   <p>
+      <span id="sel-info-top"></span> IntelliSelectors Loaded <br>
+      <span id="sel-info-bottom"></span> New Selectors (<span id="ms-sel-copy">Copy</span>)
+   </p>
+ </div>`
+ helper_div.innerHTML=selinfoContent;
+ document.body.appendChild(helper_div);  
+console.log("rendered selinfo")
 
+}
 function render(){
-   var helper_div = document.createElement("p");
-  helper_div_content=`
+var helper_div = document.createElement("div");
+  let helper_div_content=`
   <div style='display:none' id='sw-fade'></div>
    <div style='display:none' id='sw-hd'>
       <div id='sw-hd-id'>
-         <input id='sw-hd-ib' type='text' />
+         <input id='sw-hd-ib' type='text' />  <span id="ms-filter-info"></span>
       </div>
- </div>`;
+      <div>
+         <ul id="filtered-selector-display-list">
+         </ul>
+      </div>
+ </div>
+ `;
   helper_div.innerHTML=helper_div_content;
-     document.body.appendChild(helper_div);
-       // document.addEventListener("keydown", onGoogleSearchInboxKeyPress);
-       
-   console.log("rendered")
+   document.body.appendChild(helper_div);
+   console.log("rendered Main helper div")
 }
 
 
@@ -238,9 +362,43 @@ function setCaretPosition(element, offset) {
 }
 
 var myVar = setInterval(function(){
-   if(document.getElementById(CONFIG.jiraTinyMCEIframeId)){
+   if(document.getElementById(CONFIG.jiraTinyMCEIframeId) && Object.keys(MS.FULL_SEL_LIST).length > 0){
+       document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.addEventListener("keydown",onJiraDescriptiopnKeyPress)
        document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.addEventListener("keyup",onJiraDescriptiopnKeyPress)     
        render();
+       document.getElementById("sw-fade").addEventListener("click", HideHelperDiv);
        clearInterval(myVar);
    }
 }, 2000);
+
+const pageLoadInitialRender = () =>{
+   renderSelInfoDiv();
+   populateSelectorInfoDiv();
+   document.getElementById("ms-sel-copy").addEventListener("click",copyNewSelectorToClipboard)     
+}
+const copyNewSelectorToClipboard = () => {
+   if(MS.NEW_SELECTORS.length<1){
+      return;
+   }
+   let str = MS.NEW_SELECTORS[0];
+   for(let i=1; i<MS.NEW_SELECTORS.length; i++){
+      str = str + ":\n"+MS.NEW_SELECTORS[i]
+   }
+   copyToClipboard(str)
+   document.getElementById("ms-sel-copy").innerHTML = "Copied!"
+}
+
+const copyToClipboard = str => {
+   const el = document.createElement('textarea');
+   el.value = str;
+   el.setAttribute('readonly', '');
+   el.style.position = 'absolute';
+   el.style.left = '-9999px';
+   document.body.appendChild(el);
+   el.select();
+   document.execCommand('copy');
+   document.body.removeChild(el);
+ };
+
+
+ pageLoadInitialRender()

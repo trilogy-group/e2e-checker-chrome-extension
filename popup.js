@@ -27,7 +27,7 @@ const loadIntelliSelectors = (url, topText, bottomText) => {
   let obj = getFromLocalStorage(url)
   let magicselectors=parseSelectors(obj["resp"])
   let no__of_selectors = Object.keys(magicselectors).length
-  let date = new Date().toLocaleString();
+  let date = obj["date"]
   let storage_selectors={url:url, date: date,  selectors: magicselectors}
   localStorage.setItem(CONFIG.INTELLI_SELECTORS_KEY, JSON.stringify(storage_selectors))
   CURRENT_INTELLI_SELECTORS_LIST = magicselectors
@@ -92,10 +92,8 @@ document.addEventListener('DOMContentLoaded', function() {
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
               try{
-                console.log(xhr.responseText)
+                console.log("ENV loading call completed successfully status 200")
                 let nativeObject = YAML.parse(xhr.responseText)
-                console.log("\n=====\n\n")
-                console.log(nativeObject)
                 let date =  new Date().toLocaleString()
                 addTOLocalSTorage("env",url,{date: date, resp:nativeObject})
                 loadIntelliSelectors(url, CONFIG.EnvStatus.SELECTORS_LOADED, "")
@@ -158,21 +156,19 @@ document.addEventListener('DOMContentLoaded', function() {
         var switchButton = switchButtons[i];
         
         switchButton.addEventListener('click', function(obj){
-            console.log(obj)
             let pageName = this.getAttribute("data-switch")
             let color = this.getAttribute("data-color")
-            
-          var i, tabcontent, tablinks;
-          tabcontent = document.getElementsByClassName("tabcontent");
-          for (i = 0; i < tabcontent.length; i++) {
-            tabcontent[i].style.display = "none";
-          }
-          tablinks = document.getElementsByClassName("tablink");
-          for (i = 0; i < tablinks.length; i++) {
-            tablinks[i].style.backgroundColor = "";
-          }
-          document.getElementById(pageName).style.display = "block";
-          this.style.backgroundColor = color;
+            var i, tabcontent, tablinks;
+            tabcontent = document.getElementsByClassName("tabcontent");
+            for (i = 0; i < tabcontent.length; i++) {
+              tabcontent[i].style.display = "none";
+            }
+            tablinks = document.getElementsByClassName("tablink");
+            for (i = 0; i < tablinks.length; i++) {
+              tablinks[i].style.backgroundColor = "";
+            }
+            document.getElementById(pageName).style.display = "block";
+            this.style.backgroundColor = color;
         })
     }
 
@@ -187,9 +183,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
-
+              console.log("Ticket validator call completed successfully status 200")
                 var resp = JSON.parse(xhr.responseText);
-                console.log(resp)
                 RenderData(resp)
                 let now = new Date()
                 let date= now.toLocaleString()
@@ -240,15 +235,13 @@ document.addEventListener('DOMContentLoaded', function() {
     else{
         $("#passButton").click();
     }
-   console.log($(".show-me-desc"))
     $(".show-me-desc").click(function(){
       var innerHTML = this.parentNode.innerText;
       let text= innerHTML.substring(innerHTML.indexOf("/")+1, innerHTML.indexOf("--")-1).trim()
       let scenario = innerHTML.split("/")[0]
       let searchText={text:text,scenario:scenario}
       let message={hsxoe2e:searchText}
-      console.log(message)
-      
+      console.log(message) 
       const params = {
         active: true,
         currentWindow: true
@@ -323,9 +316,6 @@ document.addEventListener('DOMContentLoaded', function() {
             others.push(finalResult)
           }
       }
-      console.log(fails)
-      console.log(passes)
-      console.log(others)
       return {passes:passes, fails:fails, others: others}
   }
 
@@ -387,11 +377,27 @@ function parseSelectors(obj){
     let finalSelectors = group["selectors"]
     for (var key in finalSelectors) {
       if (finalSelectors.hasOwnProperty(key)) {
-        let serachKey = key.toLowerCase().replace(/ /g, "").replace(/-/g, "");
-        let serachValue={xpath:finalSelectors[key], group: groupName, name: key}
-        theMagicSelectorObj[serachKey]=serachValue
+        let nameKey = key.toLowerCase().replace(/ /g, "").replace(/-/g, "");
+        // let groupNameKey = groupName.toLowerCase().replace(/ /g, "").replace(/-/g, "");
+        // let searchKey = nameKey+"|"+groupNameKey
+        let searchValue={xpath:finalSelectors[key], group: groupName, name: key}
+        let uniquekey = getUniqueKey(theMagicSelectorObj, nameKey)
+        theMagicSelectorObj[uniquekey]=searchValue
       }
     }
   }
   return theMagicSelectorObj;
+}
+
+function getUniqueKey(obj, key){
+  let ukey = key
+  for(i=1; i<100; i++){
+    if(obj.hasOwnProperty(ukey)){
+        ukey=ukey+i
+    }
+    else{
+      break
+    }
+  }
+return ukey;
 }
