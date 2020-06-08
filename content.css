@@ -1,3 +1,20 @@
+#ms-usage-info{
+  color:maroon;
+  padding-left: 10px;
+  font-size: 12px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+#ms-usage-info .keyboard-keys{
+  border: 1px solid maroon ;
+}
+#sw-hd-id{
+  padding-left: 8px;
+}
+#sw-hd-ib{
+  font-size: 14px;
+  padding-left: 2px;
+}
 #filtered-selector-display-list{
   list-style: none;
   padding-left: 15px;

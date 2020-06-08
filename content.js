@@ -13,7 +13,7 @@ var MS ={
    NEW_SELECTORS : [],
    cur_selector_active_index: -1,
    last_search_key: "",
-   HELPER_DIV_VISIBLE: false 
+   HELPER_DIV_VISIBLE: false
 }
 
 chrome.runtime.onMessage.addListener((message, sender, response)=> {
@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
          var pureScenarioSearch = divs[i].innerText.replace(/\n/g, " ").replace(/"/g,"").replace(/ /g,"").replace(/ /g,"").indexOf("cenario:"+pureScenario)
          var pureTextSearch = divs[i].innerText.replace(/\n/g, " ").replace(/"/g,"").replace(/ /g,"").replace(/ /g,"").indexOf(pureText)
          if (pureScenarioSearch > -1 ) {
-                  if(pureTextSearch <0 &&  divs[i+1].innerText.replace(/\n/g, " ").replace(/"/g,"").replace(/ /g,"").replace(/ /g,"").indexOf(pureText)){
+                  if(pureTextSearch <0 &&  (divs[i+1].innerText.replace(/\n/g, " ").replace(/"/g,"").replace(/ /g,"").replace(/ /g,"").indexOf(pureText)) > -1){
                      i=i+1
                   }
                   divs[i].scrollIntoView()
@@ -74,6 +74,7 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
    else if(message.hasOwnProperty("magicSelectors")){
       MS.CACHE_SEL_LIST = MS.FULL_SEL_LIST = message["magicSelectors"];
       populateSelectorInfoDiv()
+      showBottomDiv()
    }
    });
 
@@ -270,7 +271,7 @@ function renderSelInfoDiv(){
   let selinfoContent = `
    <div id="ms-sel-info">
    <p>
-      <span id="sel-info-top"></span> IntelliSelectors Loaded <br>
+      <span id="sel-info-top"></span> IntelliSelectors Loaded  <span<button id="msis-bottom-closebtn" style="float: right;">X</button><br>
       <span id="sel-info-bottom"></span> New Selectors (<span id="ms-sel-copy">Copy</span>)
    </p>
  </div>`
@@ -286,6 +287,12 @@ var helper_div = document.createElement("div");
    <div style='display:none' id='sw-hd'>
       <div id='sw-hd-id'>
          <input id='sw-hd-ib' type='text' />  <span id="ms-filter-info"></span>
+      </div>
+      <div id="ms-usage-info">
+         <p>
+         Use <span class="keyboard-keys">&nbsp;↑ </span>&nbsp;up / <span class="keyboard-keys">&nbsp;↓ </span>&nbsp;down keys to navigate
+         &nbsp;&amp; <span class="keyboard-keys">&nbsp;⇧&nbsp;</span> shift key to select
+         </p>
       </div>
       <div>
          <ul id="filtered-selector-display-list">
@@ -374,7 +381,15 @@ var myVar = setInterval(function(){
 const pageLoadInitialRender = () =>{
    renderSelInfoDiv();
    populateSelectorInfoDiv();
-   document.getElementById("ms-sel-copy").addEventListener("click",copyNewSelectorToClipboard)     
+   document.getElementById("ms-sel-copy").addEventListener("click",copyNewSelectorToClipboard) 
+   document.getElementById("msis-bottom-closebtn").addEventListener("click",hideBottomDiv()) 
+}
+const hideBottomDiv = () =>{
+   document.getElementById("ms-sel-info").style.display="none"
+}
+
+const showBottomDiv = () =>{
+   document.getElementById("ms-sel-info").style.display="block"
 }
 const copyNewSelectorToClipboard = () => {
    if(MS.NEW_SELECTORS.length<1){
@@ -384,6 +399,7 @@ const copyNewSelectorToClipboard = () => {
    for(let i=1; i<MS.NEW_SELECTORS.length; i++){
       str = str + ":\n"+MS.NEW_SELECTORS[i]
    }
+   str= str+":"
    copyToClipboard(str)
    document.getElementById("ms-sel-copy").innerHTML = "Copied!"
 }

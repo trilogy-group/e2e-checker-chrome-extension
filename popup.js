@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.tabs.sendMessage(tabs[0].id, message, renderEnvDS);
   });
 
-  $("#env-status-show").click(function(){
+  $("#envFooter").click(function(){
     $("#env-show-hide").toggle();
   });
 
