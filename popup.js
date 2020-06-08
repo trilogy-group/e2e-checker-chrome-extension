@@ -49,6 +49,7 @@ const renderEnvDS = envds => {
     $("#env-url-input").val(envds)
     
   }else if(envds && !getFromLocalStorage(envds)){
+    $("#env-url-input").val(envds)
     localStorage.removeItem(CONFIG.INTELLI_SELECTORS_KEY);
     path = envds.replace(CONFIG.enVDSURLMatcher, "")
     $("#env-status-show").html(`${CONFIG.EnvStatus.ENV_FOUND_LOAD} <br> ${path}`)

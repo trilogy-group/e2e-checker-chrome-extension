@@ -271,7 +271,7 @@ function renderSelInfoDiv(){
   let selinfoContent = `
    <div id="ms-sel-info">
    <p>
-      <span id="sel-info-top"></span> IntelliSelectors Loaded  <span<button id="msis-bottom-closebtn" style="float: right;">X</button><br>
+      <span id="sel-info-top"></span> IntelliSelectors Loaded  <button id="msis-bottom-closebtn" style="float: right;">X</button><br>
       <span id="sel-info-bottom"></span> New Selectors (<span id="ms-sel-copy">Copy</span>)
    </p>
  </div>`
@@ -382,7 +382,7 @@ const pageLoadInitialRender = () =>{
    renderSelInfoDiv();
    populateSelectorInfoDiv();
    document.getElementById("ms-sel-copy").addEventListener("click",copyNewSelectorToClipboard) 
-   document.getElementById("msis-bottom-closebtn").addEventListener("click",hideBottomDiv()) 
+   document.getElementById("msis-bottom-closebtn").addEventListener("click",hideBottomDiv) 
 }
 const hideBottomDiv = () =>{
    document.getElementById("ms-sel-info").style.display="none"
