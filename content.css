@@ -21,6 +21,7 @@
   padding-right: 10px;
   overflow: auto;
   height: 400px;
+  font-size: 13px;
 }
 #filtered-selector-display-list li{
   padding-top: 2px;

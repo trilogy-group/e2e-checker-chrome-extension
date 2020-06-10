@@ -219,9 +219,9 @@ function renderFilteredSelectors(){
    let i=0;
    for (; i< MS.FILETERED_SEL_LIST.length ; i++ ){
       let selObj =MS.FILETERED_SEL_LIST[i]
-      html = html + `<li id='ms-filtered-selector-${i}'> ${selObj.name} |  <span class="ms-t-group"> ${selObj.group}</span> </li> `
+      html = html + `<li id='ms-filtered-selector-${i}'>${i+1}. ${selObj.name} | <span class="ms-t-group">${selObj.group}</span></li> `
    }
-   html = html + `<li id='ms-filtered-selector-${i}'> --- NEW SELECTOR --- </li> `
+   html = html + `<li id='ms-filtered-selector-${i}'>${i+1}.  --- NEW SELECTOR --- </li> `
    
    document.getElementById("filtered-selector-display-list").innerHTML = html
    document.getElementById("ms-filter-info").innerHTML = ` ${MS.FILETERED_SEL_LIST.length} / ${Object.keys(MS.FULL_SEL_LIST).length} Matched!`
@@ -351,8 +351,8 @@ function recursiveCall (node, offset){
 var currentNode= null ;
 var FINAL_OFFSET=0
 function setCaretPosition(element, offset) {
-   var range = document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.createRange();
-   var sel = document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.getSelection();
+   var range = document.querySelector('iframe').contentWindow.document.createRange();
+   var sel = document.querySelector('iframe').contentWindow.getSelection();
 
    //select appropriate node
    currentNode = null;
@@ -369,9 +369,9 @@ function setCaretPosition(element, offset) {
 }
 
 var myVar = setInterval(function(){
-   if(document.getElementById(CONFIG.jiraTinyMCEIframeId) && Object.keys(MS.FULL_SEL_LIST).length > 0){
-       document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.addEventListener("keydown",onJiraDescriptiopnKeyPress)
-       document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.addEventListener("keyup",onJiraDescriptiopnKeyPress)     
+   if(document.querySelector('iframe') && Object.keys(MS.FULL_SEL_LIST).length > 0){
+       document.querySelector('iframe').contentWindow.document.addEventListener("keydown",onJiraDescriptiopnKeyPress)
+       document.querySelector('iframe').contentWindow.document.addEventListener("keyup",onJiraDescriptiopnKeyPress)     
        render();
        document.getElementById("sw-fade").addEventListener("click", HideHelperDiv);
        clearInterval(myVar);
