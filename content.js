@@ -54,8 +54,8 @@ chrome.runtime.onMessage.addListener((message, sender, response)=> {
       }
       if(!envDS){
          // Try seraching in iframe
-         if(document.getElementById(CONFIG.jiraTinyMCEIframeId)){
-            toSearchInDiv = document.getElementById(CONFIG.jiraTinyMCEIframeId).contentWindow.document.getElementById(CONFIG.jiraTinyMCEId)
+         if(document.querySelector('iframe')){
+            toSearchInDiv = document.querySelector('iframe').contentWindow.document.getElementById(CONFIG.jiraTinyMCEId)
             if(toSearchInDiv){
                envDS = toSearchInDiv.querySelector(`a[href^='${CONFIG.enVDSURLMatcher}']`)
             }
