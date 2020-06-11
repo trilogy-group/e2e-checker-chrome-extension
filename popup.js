@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if(!url || url.length < 1){
           url = tab.url;
         }
-        let getENVURL = CONFIG.envDSValidatorEndPoint+`?url=${url}`
+        let getENVURL = CONFIG.envDSValidatorEndPoint+`?url=${encodeURIComponent(url)}`
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState == 4 && xhr.status == 200) {
